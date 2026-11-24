@@ -14,13 +14,23 @@ const ENTRY =
 // Gate enforced before writing: the competition accepts only UTF-8 text
 // of 1-200 characters, a single non-blank line.
 function validateEntry(text: string): void {
-  if (text.trim().length === 0) throw new Error("entry is blank");
+  if (text.trim().length === 0) {
+    throw new Error("entry is blank: the line must contain non-whitespace text");
+  }
   if (text.length < 1 || text.length > 200) {
-    throw new Error(`entry is ${text.length} chars, must be 1-200`);
+    throw new Error(
+      `entry is ${text.length} chars, must be 1-200 (trim ${text.length - 200} chars)`,
+    );
   }
   if (text.includes("\n") || text.includes("\r")) {
-    throw new Error("entry must be a single line");
+    throw new Error("entry must be a single line: no newline or carriage return allowed");
   }
+}
+
+// Small summary of the entry, logged after the write so a run leaves an
+// audit trail of exactly what was submitted.
+function summarize(text: string): { chars: number; words: number } {
+  return { chars: text.length, words: text.trim().split(/\s+/).length };
 }
 
 const OUT = process.env.OUTPUT_PATH ?? "/output/entry.txt";
@@ -28,4 +38,5 @@ const OUT = process.env.OUTPUT_PATH ?? "/output/entry.txt";
 validateEntry(ENTRY);
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, ENTRY, "utf8");
-console.log(`Wrote ${ENTRY.length} chars to ${OUT}`);
+const { chars, words } = summarize(ENTRY);
+console.log(`Wrote ${chars} chars (${words} words) to ${OUT}`);
